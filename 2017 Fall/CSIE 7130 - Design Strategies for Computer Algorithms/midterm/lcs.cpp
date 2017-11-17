@@ -10,6 +10,7 @@ Block dp[MAX][MAX];
 
 char curStr[MAX];
 vector<char*> ans;
+multiset<string> myset; 
 
 void initDP() {                         
     for (int j = 0; j < MAX; j++) 
@@ -39,6 +40,7 @@ void getLCS(int idxA, int idxB, int len, char A[], char B[], int n, int m) {
         char* tmpStr = (char *)malloc(sizeof(char) * (len + 1));
         strcpy(tmpStr, curStr);
         ans.push_back(tmpStr);
+        myset.insert(tmpStr);
         return;
     }
 
@@ -53,8 +55,13 @@ void getLCS(int idxA, int idxB, int len, char A[], char B[], int n, int m) {
 
 void printAns(int len, int size) {
     printf("%d %d\n", len, size);
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++) 
         printf("%s\n", ans[i]);
+}
+
+void printmyset(int len, int size) {
+    for (auto i: myset)
+        printf("%s\n", i);
 }
 
 int dictCmp(char* A, char* B) { return strcmp(A, B) < 0; }
@@ -70,6 +77,9 @@ int main() {
     getLCS(0, 0, 0, A, B, n, m);
     sort(ans.begin(), ans.end(), dictCmp);
     printAns(dp[n][m].len, ans.size());
-
+    // printmyset(dp[n][m].len, myset.size());
+    for (auto i: myset) {
+        printf("%s\n", i);
+    }
     return 0;
 }

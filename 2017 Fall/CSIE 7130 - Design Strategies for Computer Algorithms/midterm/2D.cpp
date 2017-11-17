@@ -1,221 +1,253 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <algorithm>
- 
-#define eps 1e-5
-#define boundary 1e6
- 
-typedef struct Node {
-    float a, b, c;
-    struct Node *next;
-} Node;
+#include "bits/stdc++.h"
+using namespace std;
+#define ERR 0.000001
 
-Node *I[3]; // I[0] = I_0; I[1] = I_-; I[2] = I_+
- 
-Node *myInit(int a, int b, int c){
-    Node *newNode = (Node *)malloc(sizeof(Node));
-    newNode->a = a;
-    newNode->b = b;
-    newNode->c = c;
-    newNode->next = NULL;
-    return newNode;
-}
- 
-int isEqual(float a, float b){
-    if(fabs(a - b)<eps) return 1;
-    return 0;
-}
- 
-void myInsert(int set, float a, float b, float c){
-    I[set]->a++;
-    Node *newNode = myInit(a, b, c);
-    newNode->next = I[set]->next;
-    I[set]->next = newNode;
-    return;
+vector<double> xs;
+double xl = INT_MIN, xr = INT_MAX;
+
+struct Node {
+    double max;
+    double min;
+};
+
+struct Point {
+    double x;
+    double y;
+};
+
+class Line {
+public:
+    int a;                             
+    int b;
+    int c;
+    double m;
+    Line* prev;
+    Line* next;
+    friend class DLinkedList;
+};
+
+Point intersect(Line* p, Line* q) {
+    Point point;
+    double det = p->a * q->b - q->a * p->b;
+    point.x = (p->c * q->b - q->c * p->b) / det;
+    point.y = (p->a * q->c - q->a * p->c) / det;
+
+    if (det != 0) return point;
+    else return {0.0, 0.0};
 }
 
-void myDelete(int set, Node **ppre, Node **pre, Node **cur, int index){
-    if(index == 0){ // Delete pre
-    	(*ppre)->next = (*pre)->next;
-		*pre = *ppre;
+class DLinkedList {
+public:
+    DLinkedList();                              // constructor
+    ~DLinkedList();                             // destructor
+    bool empty() const;                         // is list empty?
+    void addFront(int a, int b, int c);         // add to front of list
+    void addBack(int a, int b, int c);          // add to back of list
+    void removeFront();                         // remove from front
+    void removeBack();                          // remove from back
+    Line* getFront();                           // get front element
+    Line* getBack();                            // get back element
+
+    void prune(char c);
+    double assignValue(double xm, double val, char c);
+    struct Node getSlope(double x, double y);
+    void printLine();
+private:                                        // list sentinels
+    Line* head;
+    Line* tail;
+protected:
+    void add(Line* v, int a, int b, int c);     // insert new node before v
+    void remove(Line* v);                       // remove node v
+};
+
+DLinkedList::DLinkedList() {                    // constructor
+    head = new Line;                            // create sentinels
+    tail = new Line;
+    head->next = tail;                          // have them point to each other
+    tail->prev = head;  
+}
+
+DLinkedList::~DLinkedList() {                   // destructor
+    while (!empty()) removeFront();             // remove all but sentinels
+    delete head;                                // remove the sentinels
+    delete tail;
+}
+
+bool DLinkedList::empty() const                 // is list empty?
+    { return (head->next == tail); }
+
+void DLinkedList::add(Line* v, int a, int b, int c) {
+    Line* u = new Line; 
+    u->a = a; 
+    u->b = b; 
+    u->c = c; 
+    u->m = (double) -a / b;
+    u->next = v;
+    u->prev = v->prev;
+    v->prev->next = u;
+    v->prev = u;
+}
+
+void DLinkedList::addFront(int a, int b, int c) { add(head->next, a, b, c); }
+void DLinkedList::addBack(int a, int b, int c) { add(tail, a, b, c); }
+
+void DLinkedList::remove(Line* v) {
+    Line* u = v->prev;
+    Line* w = v->next;
+    u->next = w;
+    w->prev = u;
+    delete v;
+}
+
+void DLinkedList::removeFront() { remove(head->next); }
+void DLinkedList::removeBack() { remove(tail->prev); }
+
+Line* DLinkedList::getFront() { return head->next; }
+Line* DLinkedList::getBack() { return tail->prev; }    
+
+void DLinkedList::printLine() {
+    Line *curr = head->next;
+    while (curr != tail) {
+        printf("%3dx + %3dy <= %3d, m = %2.4f\n", curr->a, curr->b, curr->c, curr->m);
+        curr = curr->next;
     }
-    else{ // Delete cur
-    	(*pre)->next = (*cur)->next;
-		*cur = *pre, *pre = *ppre;
-    }
-	I[set]->a--;
-    return;
+    printf("\n");
 }
- 
-bool myCompare2 (float i, float j){ return (i < j); }
 
-int FindInter(float a1, float b1, float c1, float a2, float b2, float c2, float *x, float *y){
-    float tmp = a1 * b2 - b1 * a2;
-    if(!isEqual(tmp, 0)) *x = (b1 * c2 - c1 * b2) / tmp;
-    else return 0;
- 
-    *y = (-1 * a1 * (*x) - c1) / b1;
-    return 1;
-}
- 
-float FindY(float x){
-	float minY = -boundary-1, maxY = boundary+1;
-	
-    Node *cur = I[1]->next;
-	if(cur != NULL) minY = (-1*cur->a*x - cur->c) / cur->b;
+void DLinkedList::prune(char c) {
+    Line* curr = head->next;
+    while (curr != tail && curr->next != tail) {
+        Line* tmpCurr = curr;
+        if (curr->next->next != tail) curr = curr->next->next;
+        else curr = tail;
 
-	cur = I[2]->next;
-	if(cur != NULL) maxY = (-1*cur->a*x - cur->c) / cur->b;
-
-	if(minY > maxY) return boundary + 1;
-	else return minY;
-}
- 
-float myPrune(float Xl, float Xr){
-    float intersec[1<<14] = {0};
-    int n = 0;
-    Node *ppre, *pre, *cur;
-    for(int i=1; i<3; i++){
-        ppre = NULL, pre = I[i], cur = I[i]->next;
-        if(cur==NULL) continue;
-        while(cur->next!=NULL){
-            ppre = pre, pre = cur, cur = cur->next;
-            float x, y;
-            if(FindInter(pre->a, pre->b, pre->c, cur->a, cur->b, cur->c, &x, &y)){
-	    		int flag = -1*pre->a/pre->b > -1*cur->a/cur->b;
-            	if(x > Xl && x < Xr) intersec[n++] = x;
-				else if(x <= Xl){
-					if(i==1){
-						if(flag) myDelete(1, &ppre, &pre, &cur, 1);
-						else myDelete(1, &ppre, &pre, &cur, 0);
-					}
-					else{ // i==2
-						if(flag) myDelete(2, &ppre, &pre, &cur, 0);
-						else myDelete(2, &ppre, &pre, &cur, 1);
-					}
-				}
-				else{ // x >= Xr
-					if(i==1){
-						if(flag) myDelete(1, &ppre, &pre, &cur, 0);
-						else myDelete(1, &ppre, &pre, &cur, 1);
-					}
-					else{ // i==2
-						if(flag) myDelete(2, &ppre, &pre, &cur, 1);
-						else myDelete(2, &ppre, &pre, &cur, 0);
-					}
-				}
-       	    }
-			else{
-	    		int flag = -1*pre->c/pre->b > -1*cur->c/cur->b;
-	    		if(i==1){
-					if(flag) myDelete(1, &ppre, &pre, &cur, 1);
-					else myDelete(1, &ppre, &pre, &cur, 0);
-				}
-				else{ // i==2
-					if(flag) myDelete(2, &ppre, &pre, &cur, 0);
-					else myDelete(2, &ppre, &pre, &cur, 1);
-				}
-			}
-		}
-    }
-
-	if(I[1]->a <= 1 && I[2]->a <= 1){ // terminated
-		if(Xr < Xl) return boundary + 1;
-		float minY = boundary + 1;
-		float x, y;
-		int flag;
-
-		if(I[1]->a==1 && I[2]->a==1){
-			Node *line1 = I[1]->next, *line2 = I[2]->next;
-			if(FindInter(line1->a, line1->b, line1->c, line2->a, line2->b, line2->c, &x, &y)){
-				if(x > Xl && x < Xr){
-					if(y < minY) minY = y;
-				}
-			}
-		}
-
-		y = FindY(Xr);
-		if(y < minY) minY = y;
- 
-		y = FindY(Xl);
-		if(y < minY) minY = y;
- 
-		return minY;
-    }
-
-    std::nth_element(intersec, intersec+n/2, intersec+n, myCompare2);
-    float Xm = intersec[n/2];
-    float Ax = Xm, Bx = Xm;
-    float Ay = -boundary, By = boundary;
-    float Smax = -boundary, Smin = boundary;
-    float Tmax = -boundary, Tmin = boundary;
-    for(cur=I[1]->next; cur!=NULL; cur=cur->next){
-        float tmpY = (-1*cur->a*Xm - cur->c) / cur->b;
-        if(tmpY > Ay){
-            Ay = tmpY;
-            Smax = Smin = -1*cur->a / cur->b;
-        }
-        else if(isEqual(tmpY, Ay)){
-            float tmpM = -1*cur->a / cur->b;
-            if(tmpM > Smax) Smax = tmpM;
-            if(tmpM < Smin) Smin = tmpM;
+        Point p = intersect(tmpCurr, tmpCurr->next);
+        if (p.x && p.x >= xl && p.x <= xr) 
+            xs.push_back(p.x);
+        if (c == 'A') {
+            if (p.x >= xr) {                                                                  // Delete the line with larger m
+                if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr->next);
+                else if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr);  
+            } else if (p.x <= xl) {                                                           // Delete the line with less m
+                if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr->next);
+                else if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr);         
+            }  
+        } else if (c == 'B') {
+            if (p.x >= xr) {                                                                  // Delete the line with less m
+                if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr->next);      
+                else if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr);            
+            } else if (p.x <= xl) {                                                           // Delete the line with larger m
+                if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr->next);
+                else if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr);     
+            }  
         }
     }
-    for(cur=I[2]->next; cur!=NULL; cur=cur->next){
-        float tmpY = (-1*cur->a*Xm - cur->c) / cur->b;
-        if(tmpY < By){
-            By = tmpY;
-            Tmax = Tmin = -1*cur->a / cur->b;
-        }
-        else if(isEqual(tmpY,By)){
-            float tmpM = -1*cur->a / cur->b;
-            if(tmpM > Tmax) Tmax = tmpM;
-            if(tmpM < Tmin) Tmin = tmpM;
-        }
-    }
- 
-    if(Ay <= By || isEqual(Ay, By)){
-        if((Smin <= 0 && 0 <= Smax) || isEqual(Smin, 0) || isEqual(Smax, 0)) return Ay;
-        else if(Smax < 0) Xl = Xm;
-        else if(Smin > 0) Xr = Xm;
-    }
-    else{
-        if((Smax >= Tmin && Smin <= Tmax) || (isEqual(Smax, Tmin) && isEqual(Smin, Tmax))) return boundary + 1;
-        else if(Smax < Tmin) Xl = Xm;
-        else if(Smin > Tmax) Xr = Xm;
-    }
+}
 
-    return myPrune(Xl, Xr);
+double DLinkedList::assignValue(double xm, double val, char c) {
+    Line *curr = head->next;
+    double tmp = val;
+    while (curr != tail) {
+        double y = (curr->c - curr->a * xm) / curr->b;
+        if (y > tmp && c == 'A') tmp = y;
+        if (y < tmp && c == 'B') tmp = y; 
+        curr = curr->next;
+    }
+    return tmp;
+}
+
+Node DLinkedList::getSlope(double x, double y) {
+    Node tmp = {INT_MIN, INT_MAX};
+    Line *curr = head->next;
+    while (curr != tail) {
+        if (abs(curr->a * x + curr->b * y - curr->c) <= ERR) {
+            if (curr->m > tmp.max) tmp.max = curr->m;
+            if (curr->m < tmp.min) tmp.min = curr->m;
+        }
+        curr = curr->next;
+    }
+    return tmp;
 }
  
-int main(){
-    int N;
-    while(scanf("%d", &N)!=EOF){
-        for(int i=0; i<3; i++) I[i] = myInit(0, 0, 0);
-        while(N--){
-            float a, b, c;
-            scanf("%f %f %f", &a, &b, &c);
-            if(b==0) myInsert(0, a, b, -1*c);
-            else if(b<0) myInsert(1, a, b, -1*c);
-            else myInsert(2, a, b, -1*c);
-        }
- 
-        float Xl=-boundary, Xr=boundary;
-        Node *cur;
-        for(cur=I[0]->next; cur!=NULL; cur=cur->next){
-            if(cur->a > 0){
-                if(-1*cur->c / cur->a < Xr) Xr = -1*cur->c / cur->a;
-            }
-            else{
-                if(-1*cur->c / cur->a > Xl) Xl = -1*cur->c / cur->a;
+int main() {
+    int n;
+    scanf("%d", &n);
+    
+    DLinkedList linesA;
+    DLinkedList linesB;
+
+    for (int i = 0; i < n; i++) {
+        int a, b, c;
+        scanf("%d%d%d", &a, &b, &c);
+
+        if (b == 0 && a > 0 && a < xr) xr = (double) c / a;
+        else if (b == 0 && a < 0 && a > xl) xl = (double) c / a;
+        else if (b < 0) linesA.addBack(a, b, c);
+        else if (b > 0) linesB.addBack(a, b, c);
+    }
+
+    int cnt = 0;
+    while (cnt < 100) {
+        // printf("==========Round[%d]==========\n", cnt);
+        // if (linesA.getFront() == linesA.getBack() && linesB.getFront() == linesB.getBack()) {
+        //     double
+        // }
+        if (linesA.getFront() == linesA.getBack() && linesB.getFront() == linesB.getBack()) {
+            Line* lastA = linesA.getFront();
+            Line* lastB = linesB.getFront();
+            if (lastA->m * lastB->m < 0) {
+                printf("-INF\n");
+                break;
+            } else if (lastA->m * lastB->m > 0) {
+                if (abs(lastB->m) > abs(lastA->m)) {
+                    Point p = intersect(lastA, lastB);
+                    printf("%d\n", (int) round(p.y));
+                    break;
+                } else if (abs(lastA->m) > abs(lastB->m)) {
+                    printf("-INF\n");
+                    break;
+                }
             }
         }
- 
-        float ans = myPrune(Xl, Xr);
-        if(ans > boundary) printf("NA\n");
-        else if(ans < -boundary) printf("-INF\n");
-        else printf("%.6f\n", ans);
+
+        if (xr < xl) {
+            printf("NA\n");
+            break;
+        }
+
+        if (linesA.empty()) {
+            printf("empty: -INF\n");
+            break;
+        }
+
+        double alpha_y = INT_MIN;
+        double beta_y = INT_MAX;
+        struct Node s = {0.0, 0.0};
+        struct Node t = {0.0, 0.0};
+
+        linesA.prune('A');
+        linesB.prune('B');
+
+        nth_element(xs.begin(), xs.begin() + xs.size() / 2, xs.end());
+        double xm = xs[xs.size() / 2];
+    
+        alpha_y =  linesA.assignValue(xm, alpha_y, 'A');
+        beta_y = linesB.assignValue(xm, beta_y, 'B');
+
+        s = linesA.getSlope(xm, alpha_y);
+        t = linesB.getSlope(xm, beta_y);
+
+        if (alpha_y <= beta_y && s.min <= s.max && s.max < 0) { xl = xm; }
+        if (alpha_y <= beta_y && s.max >= s.min && s.min > 0) { xr = xm; }
+        if (alpha_y <= beta_y && s.min <= 0 && 0 <= s.max) { printf("%d\n", (int) round(alpha_y)); break; }
+        if (alpha_y > beta_y && s.max < t.min) { xl = xm; }
+        if (alpha_y > beta_y && s.min > t.max) { xr = xm; }
+        if (alpha_y > beta_y && s.max >= t.min && s.min <= t.max) { printf("NA\n"); break; }
+
+        xs.clear();
+        // linesA.printLine();
+        // linesB.printLine();
+        cnt++;
     }
     return 0;
 }
