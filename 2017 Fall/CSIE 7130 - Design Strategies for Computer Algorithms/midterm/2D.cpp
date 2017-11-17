@@ -68,7 +68,7 @@ DLinkedList::~DLinkedList() {                   // destructor
     delete tail;
 }
 
-bool DLinkedList::empty() const               { return (head->next == tail); }
+bool DLinkedList::empty() const { return (head->next == tail); }
 
 void DLinkedList::add(Line* v, int a, int b, int c) {
     Line* u = new Line; 
@@ -100,65 +100,65 @@ Line* DLinkedList::getFront() { return head->next; }
 Line* DLinkedList::getBack() { return tail->prev; }    
 
 void DLinkedList::printLine() {
-    Line *curr = head->next;
-    while (curr != tail) { 
-        printf("%3dx + %3dy <= %3d, m = %2.4f\n", curr->a, curr->b, curr->c, curr->m);
-        curr = curr->next;
+    Line *now = head->next;
+    while (now != tail) { 
+        printf("%3dx + %3dy <= %3d, m = %2.4f\n", now->a, now->b, now->c, now->m);
+        now = now->next;
     }
     printf("=====End of printLine()=====\n");
 }
 
 void prune(DLinkedList& lines, char c) {
-    Line* curr = lines.getFront();
-    while (curr != lines.getBack()->next && curr->next != lines.getBack()->next) {
-        Line* tmpCurr = curr;
-        if (curr->next->next != lines.getBack()->next) curr = curr->next->next;
-        else curr = lines.getBack()->next;
+    Line* now = lines.getFront();
+    while (now != lines.getBack()->next && now->next != lines.getBack()->next) {
+        Line* curr = now;
+        if (now->next->next != lines.getBack()->next) now = now->next->next;
+        else now = lines.getBack()->next;
 
-        Point p = intersect(tmpCurr, tmpCurr->next);
+        Point p = intersect(curr, curr->next);
         if (p.x && p.x >= xl && p.x <= xr) 
             xs.push_back(p.x);
         if (c == 'A') {
             if (p.x >= xr) {                                                                  // Delete the line with larger m
-                if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr->next);
-                else if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr);  
+                if (curr->m < curr->next->m) lines.remove(curr->next);
+                else if (curr->m > curr->next->m) lines.remove(curr);  
             } else if (p.x <= xl) {                                                           // Delete the line with less m
-                if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr->next);
-                else if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr);         
+                if (curr->m > curr->next->m) lines.remove(curr->next);
+                else if (curr->m < curr->next->m) lines.remove(curr);         
             }  
         } else if (c == 'B') {
             if (p.x >= xr) {                                                                  // Delete the line with less m
-                if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr->next);      
-                else if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr);            
+                if (curr->m > curr->next->m) lines.remove(curr->next);      
+                else if (curr->m < curr->next->m) lines.remove(curr);            
             } else if (p.x <= xl) {                                                           // Delete the line with larger m
-                if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr->next);
-                else if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr);     
+                if (curr->m < curr->next->m) lines.remove(curr->next);
+                else if (curr->m > curr->next->m) lines.remove(curr);     
             }  
         }
     }
 }
 
 double assignValue(DLinkedList& lines, double xm, double val, char c) {
-    Line *curr = lines.getFront();
+    Line *now = lines.getFront();
     double tmp = val;
-    while (curr != lines.getBack()->next) {
-        double y = (curr->c - curr->a * xm) / curr->b;
+    while (now != lines.getBack()->next) {
+        double y = (now->c - now->a * xm) / now->b;
         if (y > tmp && c == 'A') tmp = y;
         if (y < tmp && c == 'B') tmp = y; 
-        curr = curr->next;
+        now = now->next;
     }
     return tmp;
 }
 
 Node getSlope(DLinkedList& lines, double x, double y) {
     Node tmp = {INT_MIN, INT_MAX};
-    Line *curr = lines.getFront();
-    while (curr != lines.getBack()->next) {
-        if (abs(curr->a * x + curr->b * y - curr->c) <= ERR) {
-            if (curr->m > tmp.max) tmp.max = curr->m;
-            if (curr->m < tmp.min) tmp.min = curr->m;
+    Line *now = lines.getFront();
+    while (now != lines.getBack()->next) {
+        if (abs(now->a * x + now->b * y - now->c) <= ERR) {
+            if (now->m > tmp.max) tmp.max = now->m;
+            if (now->m < tmp.min) tmp.min = now->m;
         }
-        curr = curr->next;
+        now = now->next;
     }
     return tmp;
 }
@@ -182,35 +182,92 @@ int main() {
 
     while (true) {
         // printf("==========Round[%d]==========\n", cnt);
-        // if (linesA.getFront() == linesA.getBack() && linesB.getFront() == linesB.getBack()) {
-        //     double
-        // }
+        
+        if (xr < xl) { printf("NA\n"); break; }
+        if (linesA.empty()) { printf("empty: -INF\n"); break; }
+        
         if (linesA.getFront() == linesA.getBack() && linesB.getFront() == linesB.getBack()) {
             Line* lastA = linesA.getFront();
             Line* lastB = linesB.getFront();
-            if (lastA->m * lastB->m < 0) {
-                printf("-INF\n");
-                break;
-            } else if (lastA->m * lastB->m > 0) {
-                if (abs(lastB->m) > abs(lastA->m)) {
-                    Point p = intersect(lastA, lastB);
-                    printf("%d\n", (int) round(p.y));
+            Point p = intersect(lastA, lastB);
+            if (lastA->m > 0) {
+                if (lastA->m > lastB->m) {
+                    if (p.x > xl) {
+                        if (xl == INT_MIN) { printf("-INF\n"); break; }
+                        else {
+                            double y = (lastA->c - lastA->a * xl) / lastA->b;
+                            printf("%d\n", (int) round(y));
+                            break;
+                        }
+                    } else if (p.x < xl) { printf("NA\n"); break; }
+                } else if (lastA->m < lastB->m) {
+                    if (p.x < xl) {
+                        double y = (lastA->c - lastA->a * xl) / lastA->b;
+                        printf("%d\n", (int) round(y));
+                        break;
+                    } else if (p.x > xr) { printf("NA\n"); break; }
+                    else { printf("%d\n", (int) round(p.y)); break; }
+                } else if (lastA->m == lastB->m) {
+                    double yA = lastA->c / lastA->b;
+                    double yB = lastB->c / lastB->b;
+                    if (yA > yB) { printf("NA\n"); break; }
+                    else if (xl == INT_MIN) { printf("-INF\n"); break; }
+                    else {
+                        double y = (lastA->c - lastA->a * xl) / lastA->b;
+                        printf("%d\n", (int) round(y));
+                        break;
+                    }
+                }
+            } else if (lastA->m < 0) {
+                if (lastA->m < lastB->m) {
+                    if (p.x < xr) {
+                        if (xr == INT_MAX) { printf("-INF\n"); break; }
+                        else {
+                            double y = (lastA->c - lastA->a * xr) / lastA->b;
+                            printf("%d\n", (int) round(y));
+                            break;
+                        }
+                    } else if (p.x > xr) { printf("NA\n"); break; }
+                } else if (lastA->m > lastB->m) {
+                    if (p.x > xr) {
+                        double y = (lastA->c - lastA->a * xr) / lastA->b;
+                        printf("%d\n", (int) round(y));
+                        break;
+                    } else if (p.x < xl) { printf("NA\n"); break; }
+                    else { printf("%d\n", (int) round(p.y)); break; }
+                } else if (lastA->m == lastA->m) {
+                    double yA = lastA->c / lastA->b;
+                    double yB = lastB->c / lastB->b;
+                    if (yA > yB) { printf("NA\n"); break; }
+                    else if (xr == INT_MAX) { printf("-INF\n"); break; }
+                    else {
+                        double y = (lastA->c - lastA->a * xr) / lastA->b;
+                        printf("%d\n", (int) round(y));
+                        break;
+                    }
+                }
+            }
+        } 
+
+        if (linesA.getFront() == linesA.getBack() && linesB.empty()) {
+            Line* lastA = linesA.getFront();
+            Line* lastB = linesB.getFront();
+            Point p = intersect(lastA, lastB);
+            if (lastA->m > 0) {
+                if (xl == INT_MIN) { printf("-INF\n"); break; }
+                else {
+                    double y = (lastA->c - lastA->a * xl) / lastA->b;
+                    printf("%d\n", (int) round(y));
                     break;
-                } else if (abs(lastA->m) > abs(lastB->m)) {
-                    printf("-INF\n");
+                }
+            } else if (lastA->m < 0) {
+                if (xr == INT_MAX) { printf("-INF\n"); break; }
+                else {
+                    double y = (lastA->c - lastA->a * xr) / lastA->b;
+                    printf("%d\n", (int) round(y));
                     break;
                 }
             }
-        }
-
-        if (xr < xl) {
-            printf("NA\n");
-            break;
-        }
-
-        if (linesA.empty()) {
-            printf("empty: -INF\n");
-            break;
         }
 
         double alpha_y = INT_MIN;
@@ -238,8 +295,8 @@ int main() {
         if (alpha_y > beta_y && s.max >= t.min && s.min <= t.max) { printf("NA\n"); break; }
 
         xs.clear();
-        // linesA.printLine();
-        // linesB.printLine();
+        linesA.printLine();
+        linesB.printLine();
     }
     return 0;
 }
