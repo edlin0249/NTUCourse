@@ -21,19 +21,19 @@ public:
     int b;
     int c;
     double m;
-    Line* prev;
-    Line* next;
+    class Line* prev;
+    class Line* next;
     friend class DLinkedList;
 };
 
 Point intersect(Line* p, Line* q) {
-    Point point;
+    Point point, emptyPoint = {0.0, 0.0};
     double det = p->a * q->b - q->a * p->b;
     point.x = (p->c * q->b - q->c * p->b) / det;
     point.y = (p->a * q->c - q->a * p->c) / det;
 
     if (det != 0) return point;
-    else return {0.0, 0.0};
+    else return emptyPoint;
 }
 
 class DLinkedList {
@@ -49,12 +49,10 @@ public:
     void removeBack();                          // remove from back
     Line* getFront();                           // get front element
     Line* getBack();                            // get back element    
-    void printLine();
+    void printLine();                           // print the list
 private:                                        // list sentinels
     Line* head;
     Line* tail;
-protected:
-
 };
 
 DLinkedList::DLinkedList() {                    // constructor
@@ -70,8 +68,7 @@ DLinkedList::~DLinkedList() {                   // destructor
     delete tail;
 }
 
-bool DLinkedList::empty() const               
-    { return (head->next == tail); }
+bool DLinkedList::empty() const               { return (head->next == tail); }
 
 void DLinkedList::add(Line* v, int a, int b, int c) {
     Line* u = new Line; 
@@ -153,7 +150,7 @@ double assignValue(DLinkedList& lines, double xm, double val, char c) {
     return tmp;
 }
 
-struct Node getSlope(DLinkedList& lines, double x, double y) {
+Node getSlope(DLinkedList& lines, double x, double y) {
     Node tmp = {INT_MIN, INT_MAX};
     Line *curr = lines.getFront();
     while (curr != lines.getBack()->next) {
@@ -183,8 +180,7 @@ int main() {
         else if (b > 0) linesB.addBack(a, b, c);
     }
 
-    int cnt = 0;
-    while (cnt < 100) {
+    while (true) {
         // printf("==========Round[%d]==========\n", cnt);
         // if (linesA.getFront() == linesA.getBack() && linesB.getFront() == linesB.getBack()) {
         //     double
@@ -219,8 +215,8 @@ int main() {
 
         double alpha_y = INT_MIN;
         double beta_y = INT_MAX;
-        struct Node s = {0.0, 0.0};
-        struct Node t = {0.0, 0.0};
+        Node s = {0.0, 0.0};
+        Node t = {0.0, 0.0};
 
         prune(linesA, 'A');
         prune(linesB, 'B');
@@ -228,7 +224,7 @@ int main() {
         nth_element(xs.begin(), xs.begin() + xs.size() / 2, xs.end());
         double xm = xs[xs.size() / 2];
     
-        alpha_y =  assignValue(linesA, xm, alpha_y, 'A');
+        alpha_y = assignValue(linesA, xm, alpha_y, 'A');
         beta_y = assignValue(linesB, xm, beta_y, 'B');
 
         s = getSlope(linesA, xm, alpha_y);
@@ -244,7 +240,6 @@ int main() {
         xs.clear();
         // linesA.printLine();
         // linesB.printLine();
-        cnt++;
     }
     return 0;
 }
