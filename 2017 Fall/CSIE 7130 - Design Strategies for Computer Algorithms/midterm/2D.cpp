@@ -41,23 +41,20 @@ public:
     DLinkedList();                              // constructor
     ~DLinkedList();                             // destructor
     bool empty() const;                         // is list empty?
+    void add(Line* v, int a, int b, int c);     // insert new line before v
     void addFront(int a, int b, int c);         // add to front of list
     void addBack(int a, int b, int c);          // add to back of list
+    void remove(Line* v);                       // remove line v
     void removeFront();                         // remove from front
     void removeBack();                          // remove from back
     Line* getFront();                           // get front element
-    Line* getBack();                            // get back element
-
-    void prune(char c);
-    double assignValue(double xm, double val, char c);
-    struct Node getSlope(double x, double y);
+    Line* getBack();                            // get back element    
     void printLine();
 private:                                        // list sentinels
     Line* head;
     Line* tail;
 protected:
-    void add(Line* v, int a, int b, int c);     // insert new node before v
-    void remove(Line* v);                       // remove node v
+
 };
 
 DLinkedList::DLinkedList() {                    // constructor
@@ -73,7 +70,7 @@ DLinkedList::~DLinkedList() {                   // destructor
     delete tail;
 }
 
-bool DLinkedList::empty() const                 // is list empty?
+bool DLinkedList::empty() const               
     { return (head->next == tail); }
 
 void DLinkedList::add(Line* v, int a, int b, int c) {
@@ -107,47 +104,47 @@ Line* DLinkedList::getBack() { return tail->prev; }
 
 void DLinkedList::printLine() {
     Line *curr = head->next;
-    while (curr != tail) {
+    while (curr != tail) { 
         printf("%3dx + %3dy <= %3d, m = %2.4f\n", curr->a, curr->b, curr->c, curr->m);
         curr = curr->next;
     }
-    printf("\n");
+    printf("=====End of printLine()=====\n");
 }
 
-void DLinkedList::prune(char c) {
-    Line* curr = head->next;
-    while (curr != tail && curr->next != tail) {
+void prune(DLinkedList& lines, char c) {
+    Line* curr = lines.getFront();
+    while (curr != lines.getBack()->next && curr->next != lines.getBack()->next) {
         Line* tmpCurr = curr;
-        if (curr->next->next != tail) curr = curr->next->next;
-        else curr = tail;
+        if (curr->next->next != lines.getBack()->next) curr = curr->next->next;
+        else curr = lines.getBack()->next;
 
         Point p = intersect(tmpCurr, tmpCurr->next);
         if (p.x && p.x >= xl && p.x <= xr) 
             xs.push_back(p.x);
         if (c == 'A') {
             if (p.x >= xr) {                                                                  // Delete the line with larger m
-                if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr->next);
-                else if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr);  
+                if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr->next);
+                else if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr);  
             } else if (p.x <= xl) {                                                           // Delete the line with less m
-                if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr->next);
-                else if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr);         
+                if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr->next);
+                else if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr);         
             }  
         } else if (c == 'B') {
             if (p.x >= xr) {                                                                  // Delete the line with less m
-                if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr->next);      
-                else if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr);            
+                if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr->next);      
+                else if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr);            
             } else if (p.x <= xl) {                                                           // Delete the line with larger m
-                if (tmpCurr->m < tmpCurr->next->m) remove(tmpCurr->next);
-                else if (tmpCurr->m > tmpCurr->next->m) remove(tmpCurr);     
+                if (tmpCurr->m < tmpCurr->next->m) lines.remove(tmpCurr->next);
+                else if (tmpCurr->m > tmpCurr->next->m) lines.remove(tmpCurr);     
             }  
         }
     }
 }
 
-double DLinkedList::assignValue(double xm, double val, char c) {
-    Line *curr = head->next;
+double assignValue(DLinkedList& lines, double xm, double val, char c) {
+    Line *curr = lines.getFront();
     double tmp = val;
-    while (curr != tail) {
+    while (curr != lines.getBack()->next) {
         double y = (curr->c - curr->a * xm) / curr->b;
         if (y > tmp && c == 'A') tmp = y;
         if (y < tmp && c == 'B') tmp = y; 
@@ -156,10 +153,10 @@ double DLinkedList::assignValue(double xm, double val, char c) {
     return tmp;
 }
 
-Node DLinkedList::getSlope(double x, double y) {
+struct Node getSlope(DLinkedList& lines, double x, double y) {
     Node tmp = {INT_MIN, INT_MAX};
-    Line *curr = head->next;
-    while (curr != tail) {
+    Line *curr = lines.getFront();
+    while (curr != lines.getBack()->next) {
         if (abs(curr->a * x + curr->b * y - curr->c) <= ERR) {
             if (curr->m > tmp.max) tmp.max = curr->m;
             if (curr->m < tmp.min) tmp.min = curr->m;
@@ -168,7 +165,7 @@ Node DLinkedList::getSlope(double x, double y) {
     }
     return tmp;
 }
- 
+
 int main() {
     int n;
     scanf("%d", &n);
@@ -225,17 +222,17 @@ int main() {
         struct Node s = {0.0, 0.0};
         struct Node t = {0.0, 0.0};
 
-        linesA.prune('A');
-        linesB.prune('B');
+        prune(linesA, 'A');
+        prune(linesB, 'B');
 
         nth_element(xs.begin(), xs.begin() + xs.size() / 2, xs.end());
         double xm = xs[xs.size() / 2];
     
-        alpha_y =  linesA.assignValue(xm, alpha_y, 'A');
-        beta_y = linesB.assignValue(xm, beta_y, 'B');
+        alpha_y =  assignValue(linesA, xm, alpha_y, 'A');
+        beta_y = assignValue(linesB, xm, beta_y, 'B');
 
-        s = linesA.getSlope(xm, alpha_y);
-        t = linesB.getSlope(xm, beta_y);
+        s = getSlope(linesA, xm, alpha_y);
+        t = getSlope(linesB, xm, beta_y);
 
         if (alpha_y <= beta_y && s.min <= s.max && s.max < 0) { xl = xm; }
         if (alpha_y <= beta_y && s.max >= s.min && s.min > 0) { xr = xm; }
