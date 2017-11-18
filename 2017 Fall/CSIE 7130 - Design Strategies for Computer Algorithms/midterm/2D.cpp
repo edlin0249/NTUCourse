@@ -205,7 +205,7 @@ int main() {
             
             if (A->m > 0) {
                 if (linesB.empty() || A->m == B->m || (A->m > B->m && p.x > xl)) {
-                    if (A->m == A->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
+                    if (A->m == B->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
                     else if (xl == INT_MIN) { isINF = true; }
                     else if (xl != INT_MIN) { ans = intersect(A, &x_l); isAns = true; }
                 }
@@ -215,7 +215,7 @@ int main() {
             }
             else if (A->m < 0) {
                 if (linesB.empty() || A->m == B->m || (A->m < B->m && p.x < xr)) {
-                    if (A->m == A->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
+                    if (A->m == B->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
                     else if (xr == INT_MAX) { isINF = true; }
                     else if (xr != INT_MAX) { ans = intersect(A, &x_r); isAns = true; }
                 }
