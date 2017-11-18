@@ -185,9 +185,9 @@ int main() {
     bool isAns = false;
     double xm;
     
-    int cnt = 0;
+    // int cnt = 0;
     while (true) {
-        printf("=============Round[%d]=============\n", cnt);
+        // printf("=============Round[%d]=============\n", cnt);
         
         if (xr < xl) { isNA = true; }
         if (linesA.empty()) { isINF = true; }
@@ -250,13 +250,13 @@ int main() {
         if (ay > by && s.min > t.max) { xr = xm; }
         if (ay > by && s.max >= t.min && s.min <= t.max) { isNA = true; }
         
-        if (isAns) { printf("%d\n", (int) round(ans.y)); break; }
-        if (isNA) { printf("NA\n"); break; }
-        if (isINF) { printf("-INF\n"); break; }
+        if (isNA) { printf("NA\n"); return 0; }
+        if (isINF) { printf("-INF\n"); return 0; }
+        if (isAns) { printf("%d\n", (int) round(ans.y)); return 0; }
         
         xs.clear();
-        linesA.printLine();
-        linesB.printLine();
+        // linesA.printLine();
+        // linesB.printLine();
         // cnt++;
     }
     return 0;
