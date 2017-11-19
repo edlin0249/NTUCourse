@@ -2,12 +2,12 @@
 
 module TestBench;
 
-reg                Clk;
-reg                Reset;
-reg                Start;
-integer            i, outfile, counter;
+reg         Clk;
+reg         Reset;
+reg         Start;
+integer     i, outfile, counter;
 
-always #(`CYCLE_TIME/2) Clk = ~Clk;    
+always #(`CYCLE_TIME / 2) Clk = ~Clk;    
 
 CPU CPU(
     .clk_i  (Clk),
@@ -18,14 +18,13 @@ CPU CPU(
 initial begin
     counter = 0;
     
-    // initialize instruction memory
-    for(i=0; i<256; i=i+1) begin
+    // Initialize instruction memory
+    for (i = 0; i < 256; i = i + 1) begin
         CPU.Instruction_Memory.memory[i] = 32'b0;
     end
-    
         
-    // initialize Register File
-    for(i=0; i<32; i=i+1) begin
+    // Initialize Register File
+    for (i = 0; i < 32; i = i + 1) begin
         CPU.Registers.register[i] = 32'b0;
     end
     
@@ -39,15 +38,13 @@ initial begin
     Reset = 0;
     Start = 0;
     
-    #(`CYCLE_TIME/4) 
+    #(`CYCLE_TIME / 4) 
     Reset = 1;
     Start = 1;
-        
-    
 end
   
 always@(posedge Clk) begin
-    if(counter == 30)    // stop after 30 cycles
+    if (counter == 30)    // stop after 30 cycles
         $stop;
         
     // print PC
@@ -68,6 +65,5 @@ always@(posedge Clk) begin
     
     counter = counter + 1;
 end
-
   
 endmodule
