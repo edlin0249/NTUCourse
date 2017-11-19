@@ -12,7 +12,7 @@ output	[1:0]	ALUOp_o;
 output		ALUSrc_o;
 output		RegWrite_o;
 
-reg			tmpRegDst_o;
+reg		tmpRegDst_o;
 reg	[1:0]	tmpALUOp_o;
 reg		tmpALUSrc_o;
 
