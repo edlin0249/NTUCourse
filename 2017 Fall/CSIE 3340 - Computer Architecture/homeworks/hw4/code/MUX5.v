@@ -7,7 +7,7 @@ module MUX5(
 
 input	[4:0]	data1_i;
 input	[4:0]	data2_i;
-input			select_i;
+input		select_i;
 output	[4:0]	data_o;
 
 reg 	[4:0]	tmpData_O;
