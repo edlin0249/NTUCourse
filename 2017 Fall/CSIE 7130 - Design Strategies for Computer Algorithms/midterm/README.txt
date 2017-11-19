@@ -1,1 +1,0 @@
-Contributed by JingZhong Xiao and Jay Chen.
