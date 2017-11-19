@@ -6,7 +6,7 @@ module Sign_Extend(
 input	[15:0]	data_i;
 output	[31:0]	data_o;
 
-reg		[31:0]	tmp;
+reg	[31:0]	tmp;
 assign	data_o = tmp;
 
 always@(*) begin
