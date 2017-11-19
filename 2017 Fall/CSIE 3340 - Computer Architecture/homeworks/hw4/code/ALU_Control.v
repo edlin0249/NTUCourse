@@ -8,7 +8,7 @@ input	[5:0]	funct_i;
 input	[1:0]	ALUOp_i;
 output	[2:0]	ALUCtrl_o;
 
-reg 	[2:0] tmpALUCtrl_o;
+reg	[2:0]	tmpALUCtrl_o;
 assign	ALUCtrl_o = tmpALUCtrl_o;
 
 always@(*) begin
