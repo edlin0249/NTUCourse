@@ -2,7 +2,7 @@ module ALU(
 	data1_i,	// Registers.RSdata_o
 	data2_i,	// MUX_ALUSrc.data_o
 	ALUCtrl_i,	// ALU_Control.ALUCtrl_o
-	data_o,     // Registers.RDdata_i
+	data_o,		// Registers.RDdata_i
 	Zero_o
 );
 
