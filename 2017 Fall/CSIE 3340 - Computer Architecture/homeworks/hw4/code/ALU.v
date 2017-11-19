@@ -10,7 +10,7 @@ input	[31:0]	data1_i;
 input	[31:0]	data2_i;
 input	[2:0] 	ALUCtrl_i;
 output	[31:0] 	data_o;
-output Zero_o;
+output	Zero_o;
 
 reg 	[31:0]	tmpData_o;
 assign	data_o = tmpData_o;
