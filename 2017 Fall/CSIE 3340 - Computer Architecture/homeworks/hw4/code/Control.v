@@ -7,10 +7,10 @@ module Control(
 );
 
 input	[5:0]	Op_i;
-output		RegDst_o;
+output			RegDst_o;
 output	[1:0]	ALUOp_o;
-output		ALUSrc_o;
-output		RegWrite_o;
+output			ALUSrc_o;
+output			RegWrite_o;
 
 reg		tmpRegDst_o;
 reg	[1:0]	tmpALUOp_o;
