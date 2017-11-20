@@ -1,5 +1,5 @@
 #include "bits/stdc++.h"
-#define ERR 0.000001
+#define ERR 1e-10
 using namespace std;
 
 vector<double> xs;
@@ -21,20 +21,11 @@ public:
     int b;
     int c;
     double m;
+    double k;
     class Line* prev;
     class Line* next;
     friend class DLinkedList;
 };
-
-Point intersect(Line* p, Line* q) {
-    Point point, emptyPoint = {0.0, 0.0};
-    double det = p->a * q->b - q->a * p->b;
-    point.x = (p->c * q->b - q->c * p->b) / det;
-    point.y = (p->a * q->c - q->a * p->c) / det;
-    
-    if (det != 0) return point;
-    else return emptyPoint;
-}
 
 class DLinkedList {
 public:
@@ -76,6 +67,7 @@ void DLinkedList::add(Line* v, int a, int b, int c) {
     u->b = b;
     u->c = c;
     u->m = (double) -a / b;
+    u->k = (double) c / b;
     u->next = v;
     u->prev = v->prev;
     v->prev->next = u;
@@ -109,6 +101,16 @@ void DLinkedList::printLine() {
     printf("\n");
 }
 
+Point intersect(Line* p, Line* q) {
+    Point point, noPoint = {INT_MIN, INT_MIN};
+    double det = p->a * q->b - q->a * p->b;
+    point.x = (p->c * q->b - q->c * p->b) / det;
+    point.y = (p->a * q->c - q->a * p->c) / det;
+    
+    if (abs(det) >= ERR) return point;
+    else return noPoint;
+}
+
 void prune(DLinkedList& lines, char c) {
     Line* now = lines.front();
     while (now != lines.back()->next && now->next != lines.back()->next) {
@@ -117,21 +119,28 @@ void prune(DLinkedList& lines, char c) {
         else now = lines.back()->next;
         
         Point p = intersect(curr, curr->next);
-        if (p.x && p.x >= xl && p.x <= xr)
+        if (p.x != INT_MIN && p.x >= xl && p.x <= xr)
             xs.push_back(p.x);
         if (c == 'A') {
-            if (p.x >= xr) {                                                                  // Delete the line with larger m
+            if (abs(curr->m - curr->next->m) < ERR) {                       // Delete the line with less k (c / b)
+                if (curr->k > curr->next->k) lines.remove(curr->next);
+                else if (curr->k < curr->next->k) lines.remove(curr);
+            } else if (p.x >= xr) {                                         // Delete the line with larger m (-a / b)
                 if (curr->m < curr->next->m) lines.remove(curr->next);
                 else if (curr->m > curr->next->m) lines.remove(curr);
-            } else if (p.x <= xl) {                                                           // Delete the line with less m
+            } else if (p.x <= xl) {                                         // Delete the line with less m (-a / b)
                 if (curr->m > curr->next->m) lines.remove(curr->next);
                 else if (curr->m < curr->next->m) lines.remove(curr);
             }
-        } else if (c == 'B') {
-            if (p.x >= xr) {                                                                  // Delete the line with less m
+        } 
+        else if (c == 'B') {
+            if (abs(curr->m - curr->next->m) < ERR) {                       // Delete the line with larger k (c / b)
+                if (curr->k < curr->next->k) lines.remove(curr->next);      
+                else if (curr->k > curr->next->k) lines.remove(curr);
+            } else if (p.x >= xr) {                                         // Delete the line with less m (-a / b)
                 if (curr->m > curr->next->m) lines.remove(curr->next);
                 else if (curr->m < curr->next->m) lines.remove(curr);
-            } else if (p.x <= xl) {                                                           // Delete the line with larger m
+            } else if (p.x <= xl) {                                         // Delete the line with larger m (-a / b)
                 if (curr->m < curr->next->m) lines.remove(curr->next);
                 else if (curr->m > curr->next->m) lines.remove(curr);
             }
@@ -184,6 +193,8 @@ int main() {
     bool isAns = false;
     double xm;
     
+    // linesA.printLine();
+    // linesB.printLine();
     // int cnt = 0;
     while (true) {
         // printf("=============Round[%d]=============\n", cnt);
@@ -191,6 +202,7 @@ int main() {
         if (xr < xl) { isNA = true; }
         if (linesA.empty()) { isINF = true; }
         
+        bool isA2 = (linesA.front()->next == linesA.back());
         bool isA = (linesA.front() == linesA.back());
         bool isB = (linesB.front() == linesB.back());
         Point ans = {0.0, 0.0};
@@ -203,18 +215,18 @@ int main() {
             Point p = intersect(A, B);
             
             if (A->m > 0) {
-                if (linesB.empty() || A->m == B->m || (A->m > B->m && p.x > xl)) {
-                    if (A->m == B->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
+                if (linesB.empty() || (abs(A->m - B->m) < ERR) || (A->m > B->m && p.x > xl)) {
+                    if ((abs(A->m - B->m) < ERR) && (A->k > B->k)) { isNA = true; }
                     else if (xl == INT_MIN) { isINF = true; }
                     else if (xl != INT_MIN) { ans = intersect(A, &x_l); isAns = true; }
                 }
                 else if (A->m < B->m && p.x < xl) { ans = intersect(A, &x_l); isAns = true; }
                 else if (A->m < B->m && p.x > xr) { isNA = true; }
                 else { ans = p; isAns = true; }
-            }
+            } 
             else if (A->m < 0) {
-                if (linesB.empty() || A->m == B->m || (A->m < B->m && p.x < xr)) {
-                    if (A->m == B->m && ((double) A->c / A->b > (double) B->c / B->b)) { isNA = true; }
+                if (linesB.empty() || (abs(A->m - B->m) < ERR) || (A->m < B->m && p.x < xr)) {
+                    if ((abs(A->m - B->m) < ERR) && (A->k > B->k)) { isNA = true; }
                     else if (xr == INT_MAX) { isINF = true; }
                     else if (xr != INT_MAX) { ans = intersect(A, &x_r); isAns = true; }
                 }
